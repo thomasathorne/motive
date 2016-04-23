@@ -1,6 +1,8 @@
 (ns motive.phrases
   (:require [motive.tonality :as t]
-            [motive.math :as m]))
+            [motive.math :as m]
+            [motive.generator :as g]
+            [com.rpl.specter :refer [FIRST select]]))
 
 (defn with-tonality-predicate
   [tonality gen]
@@ -55,3 +57,12 @@
 (defn middle-of-keyboard
   [n]
   (m/exp (- (/ (m/pow (- n 60) 2) 200))))
+
+(defn motive
+  [part note-length phrase]
+  (g/parallel (fn [m] {:duration note-length
+                       :events [{:at 0
+                                 :part part
+                                 :pitch m
+                                 :dur note-length}]})
+              #(select [:events FIRST :pitch] %) phrase))

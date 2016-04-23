@@ -53,7 +53,18 @@
   (fn [& [history state]]
     (let [state                  (or state {:index 0 :states (vec (repeat (count gens) nil))})
           {:keys [index states]} state
-          [ch s]                 ((nth gens index) history (nth states index))]
-      [ch (-> state
-              (assoc-in [:states index] s)
-              (assoc :index (if (= index (dec (count gens))) 0 (inc index))))])))
+          [e s]                  ((nth gens index) history (nth states index))]
+      [e (-> state
+             (assoc-in [:states index] s)
+             (assoc :index (if (= index (dec (count gens))) 0 (inc index))))])))
+
+(defn parallel
+  [combine-fn & args]
+  {:pre [(even? (count args))]}
+  (let [pairs (partition 2 args)]
+    (fn [& [history state]]
+      (let [results (mapv (fn [[f gen] i]
+                            (gen (map f history) (get state i)))
+                          pairs (range))]
+        [(apply combine-fn (mapv first results))
+         (mapv second results)]))))

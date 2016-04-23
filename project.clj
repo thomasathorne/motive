@@ -2,6 +2,6 @@
   :description "Stochastic generators for music programming."
   :license ""
   :url "https://github.com/thomasathorne/motive"
-  :dependencies []
+  :dependencies [[com.rpl/specter "0.9.3"]]
   :profiles {:provided {:dependencies [[org.clojure/clojure "1.7.0"]
                                        [org.clojure/clojurescript "0.0-3211"]]}})
