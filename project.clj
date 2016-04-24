@@ -4,4 +4,6 @@
   :url "https://github.com/thomasathorne/motive"
   :dependencies [[com.rpl/specter "0.9.3"]]
   :profiles {:provided {:dependencies [[org.clojure/clojure "1.7.0"]
-                                       [org.clojure/clojurescript "0.0-3211"]]}})
+                                       [overtone "0.10.1"]
+                                       [org.clojure/clojurescript "0.0-3211"]]
+                        :jvm-opts ^:replace []}})

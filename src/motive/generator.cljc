@@ -17,6 +17,11 @@
 ;;   [:time-box {:length 3000
 ;;               :events [... ... ...]}]
 
+(defn state-reader
+  "A generator that simply reads from its state."
+  [& [history state]]
+  [(first state) (rest state)])
+
 (defn constant
   [x]
   (fn [& [history state]]
@@ -57,6 +62,13 @@
       [e (-> state
              (assoc-in [:states index] s)
              (assoc :index (if (= index (dec (count gens))) 0 (inc index))))])))
+
+(defn cycle
+  [xs]
+  (let [n (count xs)]
+    (fn [& [history state]]
+      (let [state (or state 0)]
+        [(get xs state) (if (= state (dec n)) 0 (inc state))]))))
 
 (defn parallel
   [combine-fn & args]

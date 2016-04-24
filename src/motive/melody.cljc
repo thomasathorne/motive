@@ -1,4 +1,4 @@
-(ns motive.phrases
+(ns motive.melody
   (:require [motive.tonality :as t]
             [motive.math :as m]
             [motive.generator :as g]
@@ -15,14 +15,14 @@
 
 (defn with-interval-pred
   [pred? gen]
-  (fn [& [phrase state]]
-    (if (empty? phrase)
-      (gen phrase state)
-      (let [[n s]    (gen phrase state)
-            interval (- n (first phrase))]
+  (fn [& [history state]]
+    (if (empty? history)
+      (gen history state)
+      (let [[n s]    (gen history state)
+            interval (- n (first history))]
         (if (pred? interval)
           [n s]
-          (recur [phrase state]))))))
+          (recur [history state]))))))
 
 (defn with-max-interval
   [max-i gen]
@@ -50,19 +50,21 @@
 
 (defn step-gen
   [initial intervals]
-  (fn [& [phrase state]]
-    [(+ (rand-nth intervals) (or (first phrase) initial))
-     state]))
+  (fn [& [history state]]
+    (if (not-empty history)
+      [(+ (rand-nth intervals) (first history)) state]
+      [initial state])))
 
 (defn middle-of-keyboard
   [n]
   (m/exp (- (/ (m/pow (- n 60) 2) 200))))
 
 (defn motive
-  [part note-length phrase]
-  (g/parallel (fn [m] {:duration note-length
-                       :events [{:at 0
-                                 :part part
-                                 :pitch m
-                                 :dur note-length}]})
-              #(select [:events FIRST :pitch] %) phrase))
+  [part note-length melody]
+  (g/parallel (fn [m] (when m {:duration note-length
+                               :events [{:at 0
+                                         :part part
+                                         :pitch m
+                                         :dur note-length}]}))
+              #(select [:events FIRST :pitch] %)
+              melody))

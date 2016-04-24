@@ -3,7 +3,7 @@
             [motive.tonality :as t]
             [motive.letter-names :as ln]
             [motive.math :as m]
-            [motive.phrases :as ph]))
+            [motive.melody :as mel]))
 
 (def poison-frog
   (g/memoryless #(m/uniform 50 51)))
@@ -14,12 +14,12 @@
 
 (def dire-wolf
   (g/without-repeating
-   (ph/with-tonality-predicate (t/mode t/pentatonic ln/d-flat)
+   (mel/with-tonality-predicate (t/mode t/pentatonic ln/d-flat)
      (g/memoryless #(m/uniform 48 65)))))
 
 (def wolf
   (g/without-repeating
-   (ph/with-tonality-predicate (t/mode t/pentatonic ln/c)
+   (mel/with-tonality-predicate (t/mode t/pentatonic ln/c)
      (g/memoryless #(m/uniform 48 65)))))
 
 (def were-boomerang
@@ -28,6 +28,6 @@
    (g/memoryless #(m/uniform 45 75))))
 
 (def fire-crab
-  (ph/with-bounding-distribution
-    ph/middle-of-keyboard 4
-    (ph/step-gen 60 [11 13 -11 -13])))
+  (mel/with-bounding-distribution
+    mel/middle-of-keyboard 4
+    (mel/step-gen 60 [11 13 -11 -13])))
