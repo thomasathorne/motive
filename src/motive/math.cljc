@@ -33,3 +33,27 @@
       (if (<= e remaining)
         (recur (inc n) (- remaining e))
         n))))
+
+(defn cdf
+  [probs]
+  (let [total (apply + probs)]
+    (transduce (map #(/ % total 1.0))
+               (completing (fn [accum next]
+                             (let [prev (or (last accum) 0)]
+                               (conj accum (+ next prev)))))
+               []
+               probs)))
+
+(defn categorical
+  [cdf-vec]
+  (let [x (rand)]
+    (count (take-while #(< % x) cdf-vec))))
+
+(defn transition-fn
+  [states trans-matrix]
+  (let [cdfs         (mapv cdf trans-matrix)
+        state->index (zipmap states (range))]
+    (comp states
+          categorical
+          cdfs
+          state->index)))

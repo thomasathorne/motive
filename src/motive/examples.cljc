@@ -31,3 +31,12 @@
   (mel/with-bounding-distribution
     mel/middle-of-keyboard 4
     (mel/step-gen 60 [11 13 -11 -13])))
+
+(def egg-of-death
+  (g/markov-chain 60
+                  [60 61 62 63 64]
+                  [[0  2  8  13 15]
+                   [7  0  2  9  17]
+                   [15 1  0  1  13]
+                   [8  30 3  0  2]
+                   [7  21 34 1  0]]))

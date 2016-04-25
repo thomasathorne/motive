@@ -1,4 +1,5 @@
-(ns motive.generator)
+(ns motive.generator
+  (:require [motive.math :as m]))
 
 ;; A *generator* is a (usually non-deterministic) function
 ;;
@@ -80,3 +81,11 @@
                           pairs (range))]
         [(apply combine-fn (mapv first results))
          (mapv second results)]))))
+
+(defn markov-chain
+  [init states transition-matrix]
+  (let [f (m/transition-fn states transition-matrix)]
+    (fn [& [history state]]
+      (if (empty? history)
+        [init state]
+        [(f (first history)) state]))))
