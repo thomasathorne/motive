@@ -1,4 +1,4 @@
-(ns motive.examples
+(ns motive.melody.examples
   (:require [motive.generator :as g]
             [motive.tonality :as t]
             [motive.letter-names :as ln]
