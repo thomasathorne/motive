@@ -4,6 +4,10 @@
   #?(:clj  (Math/log x)
      :cljs (.log js/Math x)))
 
+(defn ceil [x]
+  #?(:clj  (Math/ceil x)
+     :cljs (.ceil js/Math x)))
+
 (defn abs [x]
   #?(:clj  (Math/abs x)
      :cljs (.abs js/Math x)))
@@ -57,3 +61,18 @@
           categorical
           cdfs
           state->index)))
+
+(defn normalize-vector
+  [v]
+  (let [total (apply + v)]
+    (mapv #(/ % total 1.0) v)))
+
+(defn dirichlet
+  "NB: if provided with a non-integer argument this implementation
+  rounds it upwards before sampling. (It it far easier to sample
+  dirichlet distributions that have integer parameters.)"
+  [ns]
+  (let [gammas (mapv (fn [n]
+                       (apply + (repeatedly (ceil n) #(exponential 1))))
+                     ns)]
+    (normalize-vector gammas)))

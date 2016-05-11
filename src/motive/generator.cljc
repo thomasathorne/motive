@@ -20,7 +20,8 @@
 (defn state-reader
   "A generator that simply reads from its state."
   [& [history state]]
-  [(first state) (rest state)])
+  (when-let [a (first state)]
+    [a (rest state)]))
 
 (defn constant
   [x]
