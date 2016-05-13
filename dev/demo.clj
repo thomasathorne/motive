@@ -1,7 +1,9 @@
 (ns demo
   (:require [overtone.core :refer :all]
             [motive.live :as l]
-            [motive.generator :as g]))
+            [motive.generator :as g]
+            [motive.beat :as b]
+            [motive.math :as m]))
 
 (defonce server (boot-server))
 
@@ -23,28 +25,25 @@
 (defmethod l/play :snap   [{:keys [vel]} t] (hit t vel 0.04 [1 3200 0.2] [0.6 8000 1]))
 (defmethod l/play :ploosh [{:keys [vel]} t] (hit t vel 0.6 [1 300 0.3] [0.6 2000 1]))
 
-(def drum-kit
-  {:bass   {:initialness 1   :pace 1 :energy 10 :rarity 1}
-   :snare  {:initialness 0   :pace 3 :energy 5  :rarity 1}
-   :hat    {:initialness 0   :pace 4 :energy 4  :rarity 1}
-   :snap   {:initialness 0   :pace 8 :energy 2  :rarity 1}
-   :ploosh {:initialness 0.5 :pace 1 :energy 3  :rarity 3}})
+(def context
+  {:drum-fn (fn [e]
+              (cond
+                (> e 30) {:vel (/ e 60) :part :bass}
+                (> e 10) {:vel (/ e 60) :part :snare}
+                (> e 7)  {:vel (/ e 60) :part :hat}
+                (> e 4)  {:vel (/ e 60) :part :ploosh}
+                :else    {:vel (/ e 60) :part :snap}))
+   :shape-fn (constantly [1 1 1 1])
+   :branching-energy 10
+   :randomness 2})
 
-(defn trees->beat
-  [trees t]
-  (when-let [{:keys [period energy children]} (first trees)]
-    {:dur (apply + (map :period trees))
-     :events (into [{:at t :part :snare :vel (/ energy 60)}]
-                   (concat (:events (trees->beat children t))
-                           (:events (trees->beat (rest trees) (+ t period)))))}))
+(defn beat [r]
+  {:dur 2.0
+   :events (b/realise-trees context [(b/beat-tree (assoc context :randomness r) 2 50)] 0)})
 
-(defn beat []
-  (trees->beat [(b/beat-tree {:randomness 4
-                              :shape-dist #(rand-nth [[1 1] [1 1 1]])}
-                             2 50)]
-               0))
-
-(comment (l/run-motive (g/memoryless beat))
+(comment (l/run-motive (g/memoryless (fn [] (let [r (m/exponential 10)]
+                                              (println r)
+                                              (beat r)))))
          (stop)
 
          )
