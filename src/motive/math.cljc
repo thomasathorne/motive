@@ -67,12 +67,17 @@
   (let [total (apply + v)]
     (mapv #(/ % total 1.0) v)))
 
-(defn dirichlet
-  "NB: if provided with a non-integer argument this implementation
-  rounds it upwards before sampling. (It it far easier to sample
-  dirichlet distributions that have integer parameters.)"
+(defn polya-step
   [ns]
-  (let [gammas (mapv (fn [n]
+  (let [cdf-vec (cdf ns)
+        draw    (categorical cdf-vec)]
+    (update ns draw inc)))
+
+(defn dirichlet
+  [ns & [steps]]
+  (let [steps  (or steps 100)
+        ns     (nth (iterate polya-step ns) steps)
+        gammas (mapv (fn [n]
                        (apply + (repeatedly (ceil n) #(exponential 1))))
                      ns)]
     (normalize-vector gammas)))
