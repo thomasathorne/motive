@@ -28,22 +28,25 @@
 (def context
   {:drum-fn (fn [e]
               (cond
-                (> e 30) {:vel (/ e 60) :part :bass}
-                (> e 10) {:vel (/ e 60) :part :snare}
-                (> e 7)  {:vel (/ e 60) :part :hat}
-                (> e 4)  {:vel (/ e 60) :part :ploosh}
-                :else    {:vel (/ e 60) :part :snap}))
+                (> e 30) {:vel (/ e 80) :part :bass}
+                (> e 10) {:vel (/ e 80) :part :snare}
+                (> e 7)  {:vel (/ e 80) :part :hat}
+                (> e 4)  {:vel (/ e 80) :part :ploosh}
+                :else    {:vel (/ e 80) :part :snap}))
    :shape-fn (constantly [1 1 1 1])
    :branching-energy 10
    :randomness 2})
 
-(defn beat [r]
-  {:dur 2.0
-   :events (b/realise-trees context [(b/beat-tree (assoc context :randomness r) 2 50)] 0)})
+(defn beat [d r]
+  {:dur    d
+   :events (b/realise-trees context [(b/beat-tree (assoc context :randomness r) d 100)] 0)})
 
-(comment (l/run-motive (g/memoryless (fn [] (let [r (m/exponential 10)]
-                                              (println r)
-                                              (beat r)))))
+(def beat-gen
+  (g/memoryless (fn []
+                  (let [r (m/exponential 6)]
+                    (beat 3 r)))))
+
+(comment (l/run-motive beat-gen)
          (stop)
 
          )
