@@ -25,40 +25,60 @@
 (defmethod l/play :snap   [{:keys [vel]} t] (hit t vel 0.04 [1 3200 0.2] [0.6 8000 1]))
 (defmethod l/play :ploosh [{:keys [vel]} t] (hit t vel 0.6 [1 300 0.3] [0.6 2000 1]))
 
-(def context
-  {:drum-fn (fn [e]
-              (cond
-                (> e 30) {:vel (/ e 80) :part :bass}
-                (> e 10) {:vel (/ e 80) :part :snare}
-                (> e 7)  {:vel (/ e 80) :part :hat}
-                (> e 4)  {:vel (/ e 80) :part :ploosh}
-                :else    {:vel (/ e 80) :part :snap}))
+(defn splat-drum-fn
+  [e]
+  (cond
+    (> e 30) {:vel (/ e 150) :part :bass}
+    (> e 10) {:vel (/ e 120) :part :snare}
+    (> e 7)  {:vel (/ e 120) :part :hat}
+    (> e 4)  {:vel (/ e 130) :part :ploosh}
+    :else    {:vel (/ e 100) :part :snap}))
+
+(defn context
+  [randomness drum-fn]
+  {:drum-fn drum-fn
    :shape-fn (constantly [1 1 1 1])
    :branching-energy 10
-   :randomness 2})
+   :randomness randomness})
 
-(defn beat [d r]
-  {:dur    d
-   :events (b/realise-trees context [(b/beat-tree (assoc context :randomness r) d 100)] 0)})
+(defn beat [drum-fn dur randomness]
+  {:dur    dur
+   :events (let [ctx (context randomness drum-fn)]
+             (b/realise-trees ctx [(b/beat-tree ctx dur 200)] 0))})
 
-(def beat-gen
+(defn beat-gen
+  [drum-fn]
   (g/memoryless (fn []
-                  (let [r (m/exponential 6)]
-                    (beat 3 r)))))
-
-(comment (l/run-motive beat-gen)
-         (stop)
-
-         )
+                  (let [r (m/exponential 3)]
+                    (beat drum-fn 3 r)))))
 
 (definst foo
-  [freq 170 vol 0.4 gate 1 dur 10000]
+  [freq 170 vol 0.4 gate 1 dur 100000]
   (let [env (env-gen (adsr 0.4 0.2 1 0.1)
                      (* gate (line:kr 1 0 dur))
                      1 0 1 FREE)
-        note (saw freq)]
+        note (sin-osc freq)]
     (* vol note)))
 
+(def foo-agent (agent nil))
+
 (defmethod l/play :foo
-  [{:keys [pitch dur]} t]
-  (at t (foo (midi->hz pitch) 0.01 :dur dur)))
+  [{:keys [vol freq stop]} t]
+  (send foo-agent
+        (fn [node]
+          (cond
+            (and stop node) (do (at t (ctl node :gate 0))
+                                nil)
+            stop            (println "Can't stop non-existent node.")
+            node            (at t (ctl node :freq freq :vol vol))
+            :else           (at t (foo :freq freq :vol vol))))))
+
+(defn harmonic-drum-fn
+  [e]
+  (let [note (+ 60 (* 2 (m/ceil (/ 30 e))))]
+    {:vol (/ e 150) :part :foo :freq (midi->hz note)}))
+
+(comment (l/run-motive (beat-gen splat-drum-fn))
+         (stop)
+
+         )

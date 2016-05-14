@@ -8,6 +8,10 @@
   #?(:clj  (Math/ceil x)
      :cljs (.ceil js/Math x)))
 
+(defn floor [x]
+  #?(:clj  (Math/floor x)
+     :cljs (.floor js/Math x)))
+
 (defn abs [x]
   #?(:clj  (Math/abs x)
      :cljs (.abs js/Math x)))
