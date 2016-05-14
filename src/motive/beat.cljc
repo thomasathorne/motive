@@ -31,6 +31,7 @@
                     (split-period context period energy)))})
 
 (defn realise-trees
+  "Turns a collection of beat trees into a vector of events."
   [{:keys [drum-fn] :as context} trees t & [exclude-initial?]]
   (when-let [{:keys [children period energy]} (first trees)]
     (into (if exclude-initial?
@@ -38,3 +39,8 @@
             [(merge (drum-fn energy) {:at t})])
           (concat (realise-trees context children t true)
                   (realise-trees context (rest trees) (+ t period))))))
+
+(defn random-beat
+  [context period energy t]
+  {:dur period
+   :events (realise-trees context [(beat-tree context period energy)] t)})

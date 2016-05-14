@@ -17,6 +17,5 @@
   (set (mapv #(mod (+ tonic %) 12) mode-type)))
 
 (defn tonal?
-  "Limited to whole number (ET12) notes."
   [tonality note]
   (tonality (mod note 12)))

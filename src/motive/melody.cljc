@@ -59,12 +59,11 @@
   [n]
   (m/exp (- (/ (m/pow (- n 60) 2) 200))))
 
-(defn motive
-  [part note-length melody]
-  (g/parallel (fn [m] (when m {:duration note-length
+(defn block
+  [part melody]
+  (g/parallel (fn [m] (when m {:dur 1
                                :events [{:at 0
                                          :part part
                                          :pitch m
-                                         :dur note-length}]}))
-              #(select [:events FIRST :pitch] %)
+                                         :dur 1}]}))
               melody))

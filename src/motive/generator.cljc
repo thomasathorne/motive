@@ -1,21 +1,11 @@
 (ns motive.generator)
 
-;; A *generator* is a (usually non-deterministic) function
+;; A *generator* is a (often non-deterministic) function
 ;;
 ;;  history -> state -> [next-event new-state]
 ;;
 ;; where history is a list of past events (beginning with the most
 ;; recent), and state can be any additional 'memory'.
-;;
-;; An event that is just a number is taken to represent a single midi
-;; pitch. More complicated events will eventually exist, e.g.
-;;
-;;   [:chord #{35 39 42}]
-;;   [:melody 60 62 64]
-;;   [:phrase [60 60 67 67 69 69 67]
-;;            [1  1  1  1  1  1  2]]
-;;   [:time-box {:length 3000
-;;               :events [... ... ...]}]
 
 (defn state-reader
   "A generator that simply reads from its state."
@@ -72,15 +62,14 @@
         [(get xs state) (if (= state (dec n)) 0 (inc state))]))))
 
 (defn parallel
-  [combine-fn & args]
-  {:pre [(even? (count args))]}
-  (let [pairs (partition 2 args)]
-    (fn [& [history state]]
-      (let [results (mapv (fn [[f gen] i]
-                            (gen (map f history) (get state i)))
-                          pairs (range))]
-        [(apply combine-fn (mapv first results))
-         (mapv second results)]))))
+  [combine-fn & gens]
+  (fn [& [history state]]
+    (let [results (mapv (fn [gen i]
+                          (gen (get-in state [:histories i]) (get-in state [:states i])))
+                        gens (range))]
+      [(apply combine-fn (mapv first results))
+       {:histories (mapv cons (:histories state) results)
+        :states    (mapv second results)}])))
 
 (defn markov-chain
   [init f]

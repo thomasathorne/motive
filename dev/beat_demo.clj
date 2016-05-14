@@ -1,11 +1,10 @@
-(ns demo
+(ns beat-demo
   (:require [overtone.core :refer :all]
             [motive.live :as l]
             [motive.generator :as g]
             [motive.beat :as b]
-            [motive.math :as m]))
-
-(defonce server (boot-server))
+            [motive.math :as m]
+            [motive.block :as bl]))
 
 (definst splat
   [vel 1 dur 0.1 vol1 1 freq1 400 spread1 0.1 vol2 1 freq2 1800 spread2 0.2]
@@ -37,48 +36,22 @@
 (defn context
   [randomness drum-fn]
   {:drum-fn drum-fn
-   :shape-fn (constantly [1 1 1 1])
+   :shape-fn (constantly [1 1])
    :branching-energy 10
    :randomness randomness})
 
-(defn beat [drum-fn dur randomness]
-  {:dur    dur
-   :events (let [ctx (context randomness drum-fn)]
-             (b/realise-trees ctx [(b/beat-tree ctx dur 200)] 0))})
-
 (defn beat-gen
   [drum-fn]
-  (g/memoryless (fn []
-                  (let [r (m/exponential 3)]
-                    (beat drum-fn 3 r)))))
+  (bl/with-tempo 100
+    (g/memoryless (fn []
+                    (let [r (m/exponential 5)
+                          e (m/exponential 100)]
+                      (b/random-beat (context r drum-fn) 4 e 0))))))
 
-(definst foo
-  [freq 170 vol 0.4 gate 1 dur 100000]
-  (let [env (env-gen (adsr 0.4 0.2 1 0.1)
-                     (* gate (line:kr 1 0 dur))
-                     1 0 1 FREE)
-        note (sin-osc freq)]
-    (* vol note)))
+(comment
 
-(def foo-agent (agent nil))
+  (l/run-motive (beat-gen splat-drum-fn))
 
-(defmethod l/play :foo
-  [{:keys [vol freq stop]} t]
-  (send foo-agent
-        (fn [node]
-          (cond
-            (and stop node) (do (at t (ctl node :gate 0))
-                                nil)
-            stop            (println "Can't stop non-existent node.")
-            node            (at t (ctl node :freq freq :vol vol))
-            :else           (at t (foo :freq freq :vol vol))))))
+  (stop)
 
-(defn harmonic-drum-fn
-  [e]
-  (let [note (+ 60 (* 2 (m/ceil (/ 30 e))))]
-    {:vol (/ e 150) :part :foo :freq (midi->hz note)}))
-
-(comment (l/run-motive (beat-gen splat-drum-fn))
-         (stop)
-
-         )
+  )
