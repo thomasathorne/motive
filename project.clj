@@ -1,5 +1,5 @@
-(defproject motive "0.1.0-SNAPSHOT"
-  :description "Tools for algorithmic (esp. aleatoric) music generation."
+(defproject motive "0.1.0"
+  :description "Tools for algorithmic music generation."
   :license {:name "The I Haven't Got Around To This Yet License"
             :url  "https://not-even-a-404.com"
             :comment "Based loosely upon YAPL (Yet Another Parody License)"}
