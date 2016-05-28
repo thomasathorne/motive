@@ -63,12 +63,13 @@
 
 (defn parallel
   [combine-fn & gens]
-  (fn [& [history state]]
-    (let [results (mapv (fn [gen i]
-                          (gen (get-in state [:histories i]) (get-in state [:states i])))
-                        gens (range))]
+  (fn [& [history {:keys [histories states] :as state}]]
+    (let [histories (or histories (repeat (count gens) ()))
+          results   (mapv (fn [gen i]
+                            (gen (get histories i) (get states i)))
+                          gens (range))]
       [(apply combine-fn (mapv first results))
-       {:histories (mapv cons (:histories state) results)
+       {:histories (mapv cons (map first results) histories)
         :states    (mapv second results)}])))
 
 (defn markov-chain
