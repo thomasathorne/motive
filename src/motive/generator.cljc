@@ -1,39 +1,33 @@
 (ns motive.generator)
 
-;; A *generator* is a (often non-deterministic) function
-;;
-;;  history -> state -> [next-event new-state]
-;;
-;; where history is a list of past events (beginning with the most
-;; recent), and state can be any additional 'memory'.
-
-(defn state-reader
+(defn seq-g
   "A generator that simply reads from its state."
-  [& [history state]]
-  (when-let [a (first state)]
-    [a (rest state)]))
+  [& [coll]]
+  [(first coll) (rest coll)])
 
-(defn constant
+(defn constant-g
   [x]
-  (fn [& [history state]]
+  (fn [& [state]]
     [x state]))
 
 (defn memoryless
   "Returns a memoryless generator for any simple distribution
   function."
   [dist-fn]
-  (fn [& [history state]]
+  (fn [& [state]]
     [(dist-fn) state]))
 
 (defn without-repeating
   "Generator middleware; produces a new generator that never repeats
   the same event twice in a row."
   [gen]
-  (fn [& [history state]]
-    (let [[event new-state] (gen history state)]
-      (if (= event (first history))
-        (recur [history state])
-        [event new-state]))))
+  (let [vprev (volatile! nil)]
+    (fn [& [state]]
+      (let [[event new-state] (gen state)]
+        (if (and @vprev (= event @vprev))
+          (recur state)
+          (do (vreset! vprev event)
+              [event new-state]))))))
 
 (defn choosing
   [& gens]
