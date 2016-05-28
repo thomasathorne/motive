@@ -5,12 +5,12 @@
 
 (defn run-motive
   ([gen] (run-motive gen (now)))
-  ([gen t & [history state]]
-   (when-let [[{:keys [dur events] :as block} new-state] (gen history state)]
+  ([gen t & [state]]
+   (when-let [[{:keys [dur events] :as block} new-state] (gen state)]
      (run! (fn [{:keys [at] :as e}] (play e (+ t (* 1000 at)))) events)
      (apply-by (+ (* 1000 dur) t)
                run-motive
-               [gen (+ (* 1000 dur) t) (cons block history) new-state]))))
+               [gen (+ (* 1000 dur) t) new-state]))))
 
 (defn run-motives
   [& gens]

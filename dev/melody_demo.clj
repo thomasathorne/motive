@@ -29,7 +29,7 @@
 
 (def were-boomerang
   (g/looping
-   (g/constant 60)
+   (g/constant-g 60)
    (g/memoryless #(m/uniform 45 75))))
 
 (def fire-crab

@@ -6,12 +6,12 @@
   "Combine a rhythm generator and a melody generator into a simple
   block generator."
   [part rhythm melody]
-  (g/parallel (fn [dur pitch]
-                (when (and dur pitch)
-                  {:dur    dur
-                   :events [{:at    0
-                             :part  part
-                             :pitch pitch
-                             :dur   dur}]}))
-              rhythm
-              melody))
+  (g/map-g (fn [dur pitch]
+             (when (and dur pitch)
+               {:dur    dur
+                :events [{:at    0
+                          :part  part
+                          :pitch pitch
+                          :dur   dur}]}))
+           rhythm
+           melody))

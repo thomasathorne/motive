@@ -15,14 +15,11 @@
 
 (defn with-interval-pred
   [pred? gen]
-  (fn [& [history state]]
-    (if (empty? history)
-      (gen history state)
-      (let [[n s]    (gen history state)
-            interval (- n (first history))]
-        (if (pred? interval)
-          [n s]
-          (recur [history state]))))))
+  (fn [& [{:keys [previous state] :as s}]]
+    (let [[x ns] (gen state)]
+      (if (and previous (not (pred? (- x previous))))
+        (recur [s])
+        [x {:previous x :state ns}]))))
 
 (defn with-max-interval
   [max-i gen]
@@ -50,10 +47,8 @@
 
 (defn step-gen
   [initial intervals]
-  (fn [& [history state]]
-    (if (not-empty history)
-      [(+ (rand-nth intervals) (first history)) state]
-      [initial state])))
+  (g/markov-chain initial
+                  (fn [x] (+ x (rand-nth intervals)))))
 
 (defn middle-of-keyboard
   [n]
@@ -61,9 +56,9 @@
 
 (defn block
   [part melody]
-  (g/parallel (fn [m] (when m {:dur 1
-                               :events [{:at 0
-                                         :part part
-                                         :pitch m
-                                         :dur 1}]}))
-              melody))
+  (g/map-g (fn [m] (when m {:dur 1
+                            :events [{:at 0
+                                      :part part
+                                      :pitch m
+                                      :dur 1}]}))
+           melody))

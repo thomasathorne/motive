@@ -11,4 +11,4 @@
                                       (update-in [:at] #(* factor %))
                                       (update-in [:dur] #(when % (* factor %)))))
                                 events)})]
-    (g/parallel scale gen)))
+    (g/map-g scale gen)))

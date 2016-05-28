@@ -59,7 +59,7 @@
        ps))
 
 (defn gen
-  [& [history state]]
+  [& [state]]
   (let [state (or state 1)]
     [(let [fs (factors state)]
        (chord-block (primes-chord (factors state))))

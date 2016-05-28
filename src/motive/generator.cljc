@@ -21,29 +21,27 @@
   "Generator middleware; produces a new generator that never repeats
   the same event twice in a row."
   [gen]
-  (let [vprev (volatile! nil)]
-    (fn [& [state]]
-      (let [[event new-state] (gen state)]
-        (if (and @vprev (= event @vprev))
-          (recur state)
-          (do (vreset! vprev event)
-              [event new-state]))))))
+  (fn [& [{:keys [previous state]} :as s]]
+    (let [[event new-state] (gen state)]
+      (if (and previous (= event previous))
+        (recur s)
+        [event {:previous event :state new-state}]))))
 
 (defn choosing
   [& gens]
-  (fn [& [history state]]
+  (fn [& [state]]
     (let [i      (rand-int (count gens))
-          [ch s] ((nth gens i) history (nth state i))]
+          [ch s] ((nth gens i) (nth state i))]
       [ch (cond
             state (assoc state i s)
             s     (assoc (vec (repeat (count gens) nil)) i s))])))
 
 (defn looping
   [& gens]
-  (fn [& [history state]]
+  (fn [& [state]]
     (let [state                  (or state {:index 0 :states (vec (repeat (count gens) nil))})
           {:keys [index states]} state
-          [e s]                  ((nth gens index) history (nth states index))]
+          [e s]                  ((nth gens index) (nth states index))]
       [e (-> state
              (assoc-in [:states index] s)
              (assoc :index (if (= index (dec (count gens))) 0 (inc index))))])))
@@ -51,24 +49,39 @@
 (defn cycle
   [xs]
   (let [n (count xs)]
-    (fn [& [history state]]
+    (fn [& [state]]
       (let [state (or state 0)]
         [(get xs state) (if (= state (dec n)) 0 (inc state))]))))
 
-(defn parallel
+(defn map-g
   [combine-fn & gens]
-  (fn [& [history {:keys [histories states] :as state}]]
-    (let [histories (or histories (repeat (count gens) ()))
-          results   (mapv (fn [gen i]
-                            (gen (get histories i) (get states i)))
-                          gens (range))]
+  (fn [& [state]]
+    (let [results (mapv (fn [gen i] (gen (get state i))) gens (range))]
       [(apply combine-fn (mapv first results))
-       {:histories (mapv cons (map first results) histories)
-        :states    (mapv second results)}])))
+       (mapv second results)])))
+
+(defn filter-g
+  [pred gen]
+  (fn [& [state]]
+    (loop [s state]
+      (let [[x ns] (gen s)]
+        (if (pred x)
+          [x ns]
+          (recur ns))))))
+
+(defn blocking
+  [pred gen]
+  (fn [& [state]]
+    (loop []
+      (let [[x ns] (gen state)]
+        (if (pred x)
+          [x ns]
+          (recur))))))
 
 (defn markov-chain
   [init f]
-  (fn [& [history state]]
-    (if (empty? history)
-      [init state]
-      [(f (first history)) state])))
+  (fn [& [{:keys [previous]}]]
+    (if (nil? previous)
+      [init {:previous init}]
+      (let [x (f previous)]
+        [x {:previous x}]))))
