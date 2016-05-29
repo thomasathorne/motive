@@ -78,6 +78,17 @@
           [x ns]
           (recur))))))
 
+(defn partition-g
+  [n gf]
+  (fn [& [state]]
+    (loop [n n
+           s state
+           xs []]
+      (if (pos? n)
+        (let [[x ns] (gf s)]
+          (recur (dec n) ns (conj xs x)))
+        [xs s]))))
+
 (defn markov-chain
   [init f]
   (fn [& [{:keys [previous]}]]
