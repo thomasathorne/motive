@@ -1,16 +1,12 @@
 (ns motive.core)
 
 (defn simulate
-  ([n gen]
-   (when (pos? n)
-     (let [[e s] (gen)]
-       (println (str s " ---- " e))
-       (simulate (dec n) gen s))))
+  ([n gen] (simulate n gen nil))
   ([n gen state]
-   (when (pos? n)
-     (let [[e s] (gen state)]
-       (println (str s " ---- " e))
-       (simulate (dec n) gen s)))))
+   (take n (generate (fn [state]
+                       (let [[x ns] (gen state)]
+                         [[x ns] ns]))
+                     state))))
 
 (defn generate
   "A lazy sequence of generated events."

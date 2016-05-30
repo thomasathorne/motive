@@ -13,7 +13,7 @@
                                 events)})]
     (g/map-g scale gen)))
 
-(defn in-sequence
+(defn series
   ([] {:dur 0 :events []})
   ([block & others]
    (if-let [other (first others)]
@@ -24,8 +24,15 @@
             (rest others))
      block)))
 
-(defn block-chunks
+(defn serializing
   [n gf]
-  (->> gf
-       (g/partition-g n)
-       (g/map-g (partial apply in-sequence))))
+  (g/transducing series (take n) gf))
+
+(defn parallel
+  [& blocks]
+  {:dur    (apply max 0 (map :dur blocks))
+   :events (vec (sort-by :at (apply concat (map :events blocks))))})
+
+(defn parallelizing
+  [n gf]
+  (g/transducing parallel (take n) gf))

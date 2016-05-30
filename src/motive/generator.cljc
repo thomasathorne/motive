@@ -78,16 +78,22 @@
           [x ns]
           (recur))))))
 
+(defn transducing
+  ([rf gf] (transducing rf identity gf))
+  ([rf xform gf]
+   (fn [& [state]]
+     (let [xf (xform rf)]
+       (loop [s     state
+              accum (xf)]
+         (let [[x ns]    (gf s)
+               new-accum (xf accum x)]
+           (if (reduced? new-accum)
+             [(unreduced new-accum) ns]
+             (recur ns new-accum))))))))
+
 (defn partition-g
   [n gf]
-  (fn [& [state]]
-    (loop [n n
-           s state
-           xs []]
-      (if (pos? n)
-        (let [[x ns] (gf s)]
-          (recur (dec n) ns (conj xs x)))
-        [xs s]))))
+  (transducing conj (take n) gf))
 
 (defn markov-chain
   [init f]
