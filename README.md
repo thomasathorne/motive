@@ -43,7 +43,41 @@ zero-arity case that creates its own valid initial state value:
 (gf) ===> [x state].
 ```
 
+### Generator function middleware
+
+Most of the motive library consists of functions that act as
+middleware for generator functions, in much tha same way that
+transducers have been described as middleware for reducer functions.
+
+For example, `motive.generator/choosing` takes any number of generator
+functions and returns a single generator function that each time it
+runs makes a random choice of which generator function to use. A
+similar example is `looping`, which instead cycles predictably through
+the generator functions it is given.
+
+Besides `map-g` and `filter-g`, which behave exactly as their names
+suggest, there is a second kind of filter-like behaviour possible on
+generator functions. When `filter-g` removes a value `x` from the
+stream, it continues running `gf` from the new state that it reached
+after generating `x`---so the unwanted `x`s are simply passed over.
+However, since most of the time `gf` is non-deterministic and has
+state that captures some pretty important information, we often want
+to use `blocking-filter` instead. After discarding an unwanted `x`,
+`blocking-filter` will continue from the *original* state and simply
+keep trying until it finds an `x` that is more appropriate. Needless
+to say, one should be careful about calling this on deterministic
+generator functions!
+
 ### Melody generator functions
+
+A good example of this kind of `blocking-filter` behaviour is found in
+some of the _melody_ generator functions in the `motive.melody`
+namespace. These functions simply generate integers between 0 and 128,
+that represent midi note values. Hence they have no concept of rhythm,
+instrumentation, dynamics, time signatures or phrasing. It's the most
+minimal possible notion of melody: a sequence of pitches.
+
+...
 
 ### Rhythm generator functions
 

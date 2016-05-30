@@ -20,31 +20,35 @@
 (defn without-repeating
   "Generator middleware; produces a new generator that never repeats
   the same event twice in a row."
-  [gen]
+  [gf]
   (fn [& [{:keys [previous state]} :as s]]
-    (let [[event new-state] (gen state)]
-      (if (and previous (= event previous))
+    (let [[x new-state] (gf state)]
+      (if (and previous (= x previous))
         (recur s)
-        [event {:previous event :state new-state}]))))
+        [x {:previous x :state new-state}]))))
 
 (defn choosing
-  [& gens]
-  (fn [& [state]]
-    (let [i      (rand-int (count gens))
-          [ch s] ((nth gens i) (nth state i))]
-      [ch (cond
-            state (assoc state i s)
-            s     (assoc (vec (repeat (count gens) nil)) i s))])))
+  "Generate from a randomly chosen generator function each time."
+  [& gfs]
+  (let [n (count gfs)]
+    (fn [& [state]]
+      (let [i      (rand-int n)
+            [x s] ((nth gfs i) (nth state i))]
+        [x (cond
+             state (assoc state i s)
+             s     (assoc (vec (repeat n nil)) i s))]))))
 
 (defn looping
-  [& gens]
-  (fn [& [state]]
-    (let [state                  (or state {:index 0 :states (vec (repeat (count gens) nil))})
-          {:keys [index states]} state
-          [e s]                  ((nth gens index) (nth states index))]
-      [e (-> state
-             (assoc-in [:states index] s)
-             (assoc :index (if (= index (dec (count gens))) 0 (inc index))))])))
+  "Generate from each generator function in order."
+  [& gfs]
+  (let [n (count gfs)]
+   (fn [& [state]]
+     (let [state                  (or state {:index 0 :states (vec (repeat n nil))})
+           {:keys [index states]} state
+           [x s]                  ((nth gfs index) (nth states index))]
+       [x (-> state
+              (assoc-in [:states index] s)
+              (assoc :index (if (= index (dec n)) 0 (inc index))))]))))
 
 (defn cycle
   [xs]
@@ -69,7 +73,7 @@
           [x ns]
           (recur ns))))))
 
-(defn blocking
+(defn blocking-filter
   [pred gen]
   (fn [& [state]]
     (loop []
