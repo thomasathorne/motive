@@ -26,7 +26,7 @@
 
 (defn serializing
   [n gf]
-  (g/transducing series (take n) gf))
+  (g/transducing (take n) series gf))
 
 (defn parallel
   [& blocks]
@@ -35,4 +35,4 @@
 
 (defn parallelizing
   [n gf]
-  (g/transducing parallel (take n) gf))
+  (g/transducing (take n) parallel gf))

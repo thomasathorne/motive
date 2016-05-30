@@ -80,7 +80,7 @@
 
 (defn transducing
   ([rf gf] (transducing rf identity gf))
-  ([rf xform gf]
+  ([xform rf gf]
    (fn [& [state]]
      (let [xf (xform rf)]
        (loop [s     state
@@ -93,7 +93,7 @@
 
 (defn partition-g
   [n gf]
-  (transducing conj (take n) gf))
+  (transducing (take n) conj gf))
 
 (defn markov-chain
   [init f]
